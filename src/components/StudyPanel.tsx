@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, BookOpen, CheckCircle } from "lucide-react";
+import { X, BookOpen, CheckCircle, Brain } from "lucide-react";
+import { Notes } from "@/components/Notes";
+import { Quiz } from "@/components/Quiz";
+import { useProgress } from "@/hooks/useProgress";
 
 interface StudyPanelProps {
   topicName: string;
@@ -20,6 +24,19 @@ export const StudyPanel = ({
   onClose, 
   onMarkComplete 
 }: StudyPanelProps) => {
+  const [showQuiz, setShowQuiz] = useState(false);
+  const { isSubtopicComplete, markSubtopicComplete, markSubtopicIncomplete } = useProgress();
+  const subtopicId = `${topicName}_${subtopicName}`;
+  const isComplete = isSubtopicComplete(subtopicId);
+
+  const handleMarkComplete = () => {
+    if (isComplete) {
+      markSubtopicIncomplete(subtopicId);
+    } else {
+      markSubtopicComplete(subtopicId);
+    }
+    onMarkComplete?.();
+  };
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <Card className="card-elegant w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -32,10 +49,19 @@ export const StudyPanel = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowQuiz(true)}>
+              <Brain className="h-4 w-4 mr-1" />
+              Quiz Me
+            </Button>
             {onMarkComplete && (
-              <Button variant="outline" size="sm" onClick={onMarkComplete}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleMarkComplete}
+                className={isComplete ? "bg-green-100 text-green-800" : ""}
+              >
                 <CheckCircle className="h-4 w-4" />
-                Mark Complete
+                {isComplete ? "Completed" : "Mark Complete"}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -56,8 +82,19 @@ export const StudyPanel = ({
               dangerouslySetInnerHTML={{ __html: content }}
             />
           </div>
+
+          {/* Notes Section */}
+          <Notes subtopicName={subtopicName} topicName={topicName} />
         </div>
       </Card>
+
+      {/* Quiz Modal */}
+      {showQuiz && (
+        <Quiz
+          subtopicName={subtopicName}
+          onClose={() => setShowQuiz(false)}
+        />
+      )}
     </div>
   );
 };
